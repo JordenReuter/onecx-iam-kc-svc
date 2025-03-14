@@ -33,12 +33,25 @@ import io.restassured.http.ContentType;
 public class AdminRestControllerTest extends AbstractTest {
     KeycloakTestClient authClient = new KeycloakTestClient();
     KeycloakTestClient keycloakClient = createClient();
-    //KeycloakTestClient keycloakClient1 = createClient1();
+    KeycloakTestClient keycloakClient1 = createClient1();
 
     @Test
     void getAllKeycloaksAndRealms_Test() {
         var kc0_token = this.getTokens(keycloakClient, USER_ALICE).getIdToken();
         var res = given().when()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .header(APM_HEADER_TOKEN, kc0_token)
+                .contentType(ContentType.JSON)
+                .get("/providers")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract().as(ProvidersResponseDTO.class);
+        Assertions.assertNotNull(res);
+        Assertions.assertEquals(2, res.getProviders().size());
+        kc0_token = this.getTokens(keycloakClient1, USER_ALICE).getIdToken();
+
+        //test different kc client
+        res = given().when()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, kc0_token)
                 .contentType(ContentType.JSON)
@@ -65,6 +78,22 @@ public class AdminRestControllerTest extends AbstractTest {
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
                 .body().as(RolePageResultDTO.class);
+        assertThat(result).isNotNull();
+        assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
+        //different client
+        result = given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient1, USER_ALICE).getIdToken())
+                .body(new RoleSearchCriteriaDTO())
+                .pathParam("provider", "kc1")
+                .pathParam("realm", "master")
+                .post("/{provider}/{realm}/roles/search")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .body().as(RolePageResultDTO.class);
+
         assertThat(result).isNotNull();
         assertThat(result.getStream()).isNotNull().isNotEmpty().hasSize(5);
     }
