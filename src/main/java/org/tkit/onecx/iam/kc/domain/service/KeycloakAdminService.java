@@ -1,114 +1,128 @@
 package org.tkit.onecx.iam.kc.domain.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.idm.*;
+import org.keycloak.representations.idm.MappingsRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.tkit.onecx.iam.kc.domain.config.KcConfig;
 import org.tkit.onecx.iam.kc.domain.model.Page;
 import org.tkit.onecx.iam.kc.domain.model.PageResult;
 import org.tkit.onecx.iam.kc.domain.model.RoleSearchCriteria;
 import org.tkit.onecx.iam.kc.domain.model.UserSearchCriteria;
-import org.tkit.quarkus.context.ApplicationContext;
-import org.tkit.quarkus.log.cdi.LogExclude;
 import org.tkit.quarkus.log.cdi.LogService;
 
-import io.quarkus.keycloak.admin.client.common.KeycloakAdminClientConfig;
+import gen.org.tkit.onecx.iam.kc.internal.model.ProviderDTO;
+import gen.org.tkit.onecx.iam.kc.internal.model.ProvidersResponseDTO;
 
 @LogService
 @ApplicationScoped
 public class KeycloakAdminService {
 
     @Inject
-    Keycloak keycloak;
+    KeycloakClientFactory keycloakClientFactory;
 
-    public void resetPassword(@LogExclude(mask = "***") String value) {
+    @Inject
+    KcConfig kcConfig;
 
-        var realm = getCurrentRealm();
-        var principal = ApplicationContext.get().getPrincipal();
+    private Map<String, Keycloak> keycloakClients = new HashMap<>();
 
-        CredentialRepresentation resetPassword = new CredentialRepresentation();
-        resetPassword.setValue(value);
-        resetPassword.setType(KeycloakAdminClientConfig.GrantType.PASSWORD.asString());
-        resetPassword.setTemporary(false);
-        keycloak.realm(realm).users().get(principal).resetPassword(resetPassword);
+    @PostConstruct
+    public void init() {
+        kcConfig.keycloaks().forEach((key, config) -> {
+            Keycloak keycloak = keycloakClientFactory.createKeycloakClient(
+                    config.url(),
+                    config.realm(),
+                    config.clientId(),
+                    config.clientSecret(),
+                    config.username(),
+                    config.password());
+            keycloakClients.put(key, keycloak);
+        });
     }
 
-    public PageResult<RoleRepresentation> searchRoles(RoleSearchCriteria criteria) {
-        var realm = getCurrentRealm();
+    public PageResult<RoleRepresentation> searchRoles(String provider, String realm, RoleSearchCriteria criteria) {
+        try {
+            var first = criteria.getPageNumber() * criteria.getPageSize();
+            var count = 0;
 
-        var first = criteria.getPageNumber() * criteria.getPageSize();
-        var count = 0;
+            List<RoleRepresentation> roles = keycloakClients.get(provider).realm(realm)
+                    .roles().list(criteria.getName(), first, criteria.getPageSize(), true);
 
-        List<RoleRepresentation> roles = keycloak.realm(realm)
-                .roles().list(criteria.getName(), first, criteria.getPageSize(), true);
-
-        return new PageResult<>(count, roles, Page.of(criteria.getPageNumber(), criteria.getPageSize()));
-    }
-
-    public PageResult<UserRepresentation> searchUsers(UserSearchCriteria criteria) {
-        var realm = "";
-        if (criteria.getRealm() == null || criteria.getRealm().isBlank()) {
-            realm = getCurrentRealm();
-        } else {
-            realm = criteria.getRealm();
+            return new PageResult<>(count, roles, Page.of(criteria.getPageNumber(), criteria.getPageSize()));
+        } catch (Exception ex) {
+            throw new KeycloakException(ex.getMessage());
         }
-
-        if (criteria.getUserId() != null && !criteria.getUserId().isBlank()) {
-            return new PageResult<>(1, getUserById(criteria.getUserId(), realm), Page.of(0, 1));
-        }
-
-        var first = criteria.getPageNumber() * criteria.getPageSize();
-        var count = keycloak.realm(realm).users().count(criteria.getLastName(), criteria.getFirstName(), criteria.getEmail(),
-                criteria.getUserName());
-
-        List<UserRepresentation> users = keycloak.realm(realm)
-                .users()
-                .search(criteria.getUserName(), criteria.getFirstName(), criteria.getLastName(), criteria.getEmail(), first,
-                        criteria.getPageSize(), null, false);
-
-        return new PageResult<>(count, users, Page.of(criteria.getPageNumber(), criteria.getPageSize()));
     }
 
-    public List<UserRepresentation> getUserById(String userId, String realm) {
+    public PageResult<UserRepresentation> searchUsers(String provider, String realm, UserSearchCriteria criteria) {
+        try {
+            if (criteria.getUserId() != null && !criteria.getUserId().isBlank()) {
+                var user = getUserById(criteria.getUserId(), provider, realm);
+                return new PageResult<>(user.size(), user, Page.of(0, 1));
+            }
+
+            var first = criteria.getPageNumber() * criteria.getPageSize();
+            var count = keycloakClients.get(provider).realm(realm).users().count(criteria.getLastName(),
+                    criteria.getFirstName(),
+                    criteria.getEmail(),
+                    criteria.getUserName());
+
+            List<UserRepresentation> users = keycloakClients.get(provider).realm(realm)
+                    .users()
+                    .search(criteria.getUserName(), criteria.getFirstName(), criteria.getLastName(), criteria.getEmail(), first,
+                            criteria.getPageSize(), null, false);
+
+            return new PageResult<>(count, users, Page.of(criteria.getPageNumber(), criteria.getPageSize()));
+        } catch (Exception ex) {
+            throw new KeycloakException(ex.getMessage());
+        }
+    }
+
+    public List<UserRepresentation> getUserById(String userId, String provider, String realm) {
         List<UserRepresentation> users;
         try {
-            users = List.of(keycloak.realm(realm).users().get(userId).toRepresentation());
+            users = List.of(keycloakClients.get(provider).realm(realm).users().get(userId).toRepresentation());
         } catch (ClientWebApplicationException ex) {
             users = new ArrayList<>();
         }
         return users;
     }
 
-    public String getCurrentRealm() {
-        var principalToken = principalToken();
-        return KeycloakRealmNameUtil.getRealmName(principalToken.getIssuer());
-    }
-
-    public List<RoleRepresentation> getUserRoles(String userId) {
-        var realm = getCurrentRealm();
-
-        MappingsRepresentation roles = keycloak.realm(realm)
-                .users().get(userId).roles().getAll();
-
-        return roles.getRealmMappings();
-    }
-
-    public List<String> getRealms() {
-        return keycloak.realms().findAll().stream().map(RealmRepresentation::getRealm).toList();
-    }
-
-    private JsonWebToken principalToken() {
-        var context = ApplicationContext.get();
-        var principalToken = context.getPrincipalToken();
-        if (principalToken == null) {
-            throw new KeycloakException("Principal token is required");
+    public List<RoleRepresentation> getUserRoles(String provider, String realm, String userId) {
+        try {
+            MappingsRepresentation roles = keycloakClients.get(provider).realm(realm)
+                    .users().get(userId).roles().getAll();
+            return roles.getRealmMappings();
+        } catch (Exception ex) {
+            throw new KeycloakException(ex.getMessage());
         }
-        return principalToken;
+    }
+
+    public ProvidersResponseDTO getAllKeycloaksAndRealms() {
+        ProvidersResponseDTO providersResponseDTO = new ProvidersResponseDTO();
+        kcConfig.keycloaks().forEach((s, clientConfig) -> {
+
+            ProviderDTO provider = new ProviderDTO();
+            provider.setName(s);
+            provider.setDescription(clientConfig.description().orElse(null));
+            provider.setRealms(getRealms(s));
+            providersResponseDTO.addProvidersItem(provider);
+        });
+        return providersResponseDTO;
+    }
+
+    public List<String> getRealms(String provider) {
+        return keycloakClients.get(provider).realms().findAll().stream().map(RealmRepresentation::getRealm).toList();
     }
 }

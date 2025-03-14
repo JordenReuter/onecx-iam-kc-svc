@@ -1,0 +1,150 @@
+:summaryTableId: onecx-iam-kc-svc
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-description]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-description[`onecx.kc.keycloaks."keycloaks".description`]##
+
+[.description]
+--
+Description for keycloak
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__DESCRIPTION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__DESCRIPTION+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-url]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-url[`onecx.kc.keycloaks."keycloaks".url`]##
+
+[.description]
+--
+url of keycloak
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__URL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__URL+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-issuerhost]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-issuerhost[`onecx.kc.keycloaks."keycloaks".issuerHost`]##
+
+[.description]
+--
+Baseurl of keycloak
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__ISSUERHOST+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__ISSUERHOST+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-realm]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-realm[`onecx.kc.keycloaks."keycloaks".realm`]##
+
+[.description]
+--
+Keycloak realm
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__REALM+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__REALM+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-client]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-client[`onecx.kc.keycloaks."keycloaks".client`]##
+
+[.description]
+--
+Client for keylcloak admin api
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__CLIENT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__CLIENT+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-secret]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-secret[`onecx.kc.keycloaks."keycloaks".secret`]##
+
+[.description]
+--
+Client secret
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__SECRET+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__SECRET+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-username]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-username[`onecx.kc.keycloaks."keycloaks".username`]##
+
+[.description]
+--
+Username for keycloak admin api access
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__USERNAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__USERNAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-password]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-password[`onecx.kc.keycloaks."keycloaks".password`]##
+
+[.description]
+--
+User password
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__PASSWORD+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__PASSWORD+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
+|===
+
+
+:!summaryTableId:

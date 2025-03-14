@@ -17,8 +17,6 @@ public class UserSearchCriteria {
 
     private String userId;
 
-    private String realm;
-
     private Integer pageNumber = 0;
 
     private Integer pageSize = 10;

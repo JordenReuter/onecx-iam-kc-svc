@@ -16,6 +16,8 @@ quarkus.http.auth.permission.health.paths=/q/*
 quarkus.http.auth.permission.health.policy=permit
 quarkus.http.auth.permission.default.paths=/*
 quarkus.http.auth.permission.default.policy=authenticated
+quarkus.http.test-port=0
+keycloak.cors=true
 ----
 ====
 
@@ -31,6 +33,22 @@ include::onecx-iam-kc-svc-extensions.adoc[opts=optional]
 === Helm
 
 {helm-registry}[Helm registry]
+
+Default values
+
+.{helm-file}
+[source,yaml]
+----
+app:
+  name: kc-svc
+  image:
+    repository: "onecx/onecx-iam-kc-svc"
+  db:
+    enabled: false
+
+----
+
+registry}[Helm registry]
 
 Default values
 

@@ -11,7 +11,6 @@ class KeycloakRealmNameUtilTest extends AbstractTest {
 
     @Test
     void realmNameTest() {
-
         Assertions.assertThrowsExactly(KeycloakException.class, () -> KeycloakRealmNameUtil.getRealmName(""));
     }
 }

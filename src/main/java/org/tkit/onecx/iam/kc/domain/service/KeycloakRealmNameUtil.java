@@ -12,4 +12,5 @@ public class KeycloakRealmNameUtil {
         }
         throw new KeycloakException("Wrong issuer format");
     }
+
 }

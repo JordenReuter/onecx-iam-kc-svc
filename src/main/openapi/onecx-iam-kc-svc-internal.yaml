@@ -9,14 +9,27 @@ tags:
  - name: UsersInternal
    description: Keycloak user internal service
 paths:
- /internal/users/search:
+ /internal/admin/{provider}/{realm}/users/search:
   post:
    security:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
-    - UsersInternal
+    - AdminInternal
    summary: Search users by criteria
    operationId: searchUsersByCriteria
+   parameters:
+    - name: provider
+      in: path
+      required: true
+      description: provider
+      schema:
+       type: string
+    - name: realm
+      in: path
+      required: true
+      description: realm
+      schema:
+       type: string
    requestBody:
     required: true
     content:
@@ -36,38 +49,27 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
- /internal/users/password:
-  put:
-   security:
-    - oauth2: [ ocx-ia:all, ocx-ia:write ]
-   tags:
-    - UsersInternal
-   summary: Reset user password
-   operationId: resetPassword
-   requestBody:
-    required: true
-    content:
-     application/json:
-      schema:
-       $ref: '#/components/schemas/UserResetPasswordRequest'
-   responses:
-    204:
-     description: Reset password succeeded
-    400:
-     description: Bad request
-     content:
-      application/json:
-       schema:
-        $ref: '#/components/schemas/ProblemDetailResponse'
- /internal/roles/{userId}:
+ /internal/admin/{provider}/{realm}/roles/{userId}:
   get:
    security:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
-    - RolesInternal
+    - AdminInternal
    summary: Get roles of user by id
    operationId: getUserRoles
    parameters:
+    - name: provider
+      in: path
+      required: true
+      description: provider
+      schema:
+       type: string
+    - name: realm
+      in: path
+      required: true
+      description: realm
+      schema:
+       type: string
     - name: userId
       in: path
       required: true
@@ -87,14 +89,27 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
- /internal/roles/search:
+ /internal/admin/{provider}/{realm}/roles/search:
   post:
    security:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
-    - RolesInternal
+    - AdminInternal
    summary: Search roles by criteria
    operationId: searchRolesByCriteria
+   parameters:
+    - name: provider
+      in: path
+      required: true
+      description: provider
+      schema:
+       type: string
+    - name: realm
+      in: path
+      required: true
+      description: realm
+      schema:
+       type: string
    requestBody:
     required: true
     content:
@@ -114,21 +129,65 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
- /internal/realms:
+ /internal/admin/providers:
   get:
    security:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
-    - RealmsInternal
-   summary: Get all realms
-   operationId: getAllRealms
+    - AdminInternal
+   summary: Get all providers
+   operationId: getAllProviders
+   responses:
+    200:
+     description: OK
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProvidersResponse'
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/me/password:
+  put:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:write ]
+   tags:
+    - UserInternal
+   summary: Reset user password
+   operationId: resetPassword
+   requestBody:
+    required: true
+    content:
+     application/json:
+      schema:
+       $ref: '#/components/schemas/UserResetPasswordRequest'
+   responses:
+    204:
+     description: Reset password succeeded
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/me/provider:
+  get:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - UserInternal
+   summary: Get user provider
+   operationId: getUserProvider
    responses:
     200:
      description: OK
      content:
       "application/json":
        schema:
-        $ref: '#/components/schemas/RealmResponse'
+        $ref: '#/components/schemas/ProvidersResponse'
     400:
      description: Bad request
      content:
@@ -147,9 +206,20 @@ components:
       ocx-ia:read: Grants read access
       ocx-ia:write: Grants write access
  schemas:
-  RealmResponse:
+  ProvidersResponse:
    type: object
    properties:
+    providers:
+     type: array
+     items:
+      $ref: '#/components/schemas/Provider'
+  Provider:
+   type: object
+   properties:
+    name:
+     type: string
+    description:
+     type: string
     realms:
      type: array
      items:
@@ -171,8 +241,6 @@ components:
     lastName:
      type: string
     userId:
-     type: string
-    realm:
      type: string
     email:
      type: string

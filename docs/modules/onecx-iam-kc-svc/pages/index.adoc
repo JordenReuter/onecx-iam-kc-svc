@@ -4,5 +4,7 @@ include::onecx-iam-kc-svc-attributes.adoc[opts=optional]
 
 include::docs.adoc[opts=optional]
 
+=== Configuration
+include::onecx-iam-kc-svc.adoc[opts=optional]
 
 include::onecx-iam-kc-svc-docs.adoc[opts=optional]
