@@ -177,6 +177,18 @@
                             <modelNameSuffix>DTO</modelNameSuffix>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>v1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>src/main/openapi/onecx-iam-kc-svc-v1.yaml</inputSpec>
+                            <apiPackage>gen.org.tkit.onecx.iam.kc.v1</apiPackage>
+                            <modelPackage>gen.org.tkit.onecx.iam.kc.v1.model</modelPackage>
+                            <modelNameSuffix>DTOV1</modelNameSuffix>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

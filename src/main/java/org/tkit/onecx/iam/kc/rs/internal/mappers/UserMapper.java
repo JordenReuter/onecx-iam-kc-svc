@@ -24,7 +24,7 @@ public interface UserMapper {
     UserPageResultDTO map(PageResult<UserRepresentation> usersPage, @Context String realm);
 
     @Mapping(target = "removeAttributesItem", ignore = true)
-    @Mapping(target = "realm", expression = "java(realm)")
+    @Mapping(target = "domain", expression = "java(realm)")
     UserDTO map(UserRepresentation user, @Context String realm);
 
     default OffsetDateTime map(Long dateTime) {

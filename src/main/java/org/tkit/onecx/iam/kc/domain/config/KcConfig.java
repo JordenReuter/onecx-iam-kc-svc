@@ -27,6 +27,13 @@ public interface KcConfig {
      * Keycloak client configurations
      */
     interface ClientConfig {
+
+        /**
+         * Display name for keycloak
+         */
+        @WithName("display-name")
+        String displayName();
+
         /**
          * Description for keycloak
          */

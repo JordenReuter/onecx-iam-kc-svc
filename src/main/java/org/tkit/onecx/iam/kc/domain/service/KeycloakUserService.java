@@ -38,7 +38,7 @@ public class KeycloakUserService {
                 config.password());
     }
 
-    public String getCurrentRealm() {
+    public String getCurrentDomain() {
         var principalToken = principalToken();
         return KeycloakRealmNameUtil.getRealmName(principalToken.getIssuer());
     }
@@ -64,14 +64,15 @@ public class KeycloakUserService {
         providerDTO.setName(currentProviderKey);
         providerDTO.setDescription(kcConfig.keycloaks().get(currentProviderKey).description().orElse(null));
         providerDTO.setFromToken(true);
-        providerDTO.setRealms(List.of(getCurrentRealm()));
+        providerDTO.setDomains(List.of(getCurrentDomain()));
+        providerDTO.setDescription(kcConfig.keycloaks().get(currentProviderKey).displayName());
         providersResponseDTO.setProviders(List.of(providerDTO));
         return providersResponseDTO;
     }
 
     public void resetPassword(@LogExclude(mask = "***") String value) {
         createClient();
-        var realm = getCurrentRealm();
+        var realm = getCurrentDomain();
         var principal = ApplicationContext.get().getPrincipal();
 
         CredentialRepresentation resetPassword = new CredentialRepresentation();

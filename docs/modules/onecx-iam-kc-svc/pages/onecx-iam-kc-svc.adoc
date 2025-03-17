@@ -8,6 +8,23 @@ h|[.header-title]##Configuration property##
 h|Type
 h|Default
 
+a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-display-name]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-display-name[`onecx.kc.keycloaks."keycloaks".display-name`]##
+
+[.description]
+--
+Display name for keycloak
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__DISPLAY_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++ONECX_KC_KEYCLOAKS__KEYCLOAKS__DISPLAY_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|required icon:exclamation-circle[title=Configuration property is required]
+
 a| [[onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-description]] [.property-path]##link:#onecx-iam-kc-svc_onecx-kc-keycloaks-keycloaks-description[`onecx.kc.keycloaks."keycloaks".description`]##
 
 [.description]

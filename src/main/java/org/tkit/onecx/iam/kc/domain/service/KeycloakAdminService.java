@@ -125,18 +125,18 @@ public class KeycloakAdminService {
         var tokenProviderKey = getCurrentProviderKey();
         ProvidersResponseDTO providersResponseDTO = new ProvidersResponseDTO();
         kcConfig.keycloaks().forEach((s, clientConfig) -> {
-
             ProviderDTO provider = new ProviderDTO();
             provider.setName(s);
             provider.setDescription(clientConfig.description().orElse(null));
             provider.setFromToken(tokenProviderKey.equals(s));
-            provider.setRealms(getRealms(s));
+            provider.setDomains(getDomains(s));
+            provider.setDescription(clientConfig.displayName());
             providersResponseDTO.addProvidersItem(provider);
         });
         return providersResponseDTO;
     }
 
-    public List<String> getRealms(String provider) {
+    public List<String> getDomains(String provider) {
         return keycloakClients.get(provider).realms().findAll().stream().map(RealmRepresentation::getRealm).toList();
     }
 
