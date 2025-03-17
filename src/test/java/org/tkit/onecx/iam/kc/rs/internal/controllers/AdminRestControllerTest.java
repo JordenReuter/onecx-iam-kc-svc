@@ -61,6 +61,15 @@ public class AdminRestControllerTest extends AbstractTest {
                 .extract().as(ProvidersResponseDTO.class);
         Assertions.assertNotNull(res);
         Assertions.assertEquals(2, res.getProviders().size());
+
+        //test without token
+        given().when()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(ContentType.JSON)
+                .get("/providers")
+                .then()
+                .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
+
     }
 
     @Test

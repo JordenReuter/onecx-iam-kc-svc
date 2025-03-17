@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.MappingsRepresentation;
@@ -20,6 +21,7 @@ import org.tkit.onecx.iam.kc.domain.model.Page;
 import org.tkit.onecx.iam.kc.domain.model.PageResult;
 import org.tkit.onecx.iam.kc.domain.model.RoleSearchCriteria;
 import org.tkit.onecx.iam.kc.domain.model.UserSearchCriteria;
+import org.tkit.quarkus.context.ApplicationContext;
 import org.tkit.quarkus.log.cdi.LogService;
 
 import gen.org.tkit.onecx.iam.kc.internal.model.ProviderDTO;
@@ -109,13 +111,25 @@ public class KeycloakAdminService {
         }
     }
 
+    public String getCurrentProviderKey() {
+        var principalToken = principalToken();
+        var issuerHost = principalToken.getIssuer();
+        return kcConfig.keycloaks().entrySet().stream()
+                .filter(entry -> issuerHost.startsWith(entry.getValue().issuerHost()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+    }
+
     public ProvidersResponseDTO getAllKeycloaksAndRealms() {
+        var tokenProviderKey = getCurrentProviderKey();
         ProvidersResponseDTO providersResponseDTO = new ProvidersResponseDTO();
         kcConfig.keycloaks().forEach((s, clientConfig) -> {
 
             ProviderDTO provider = new ProviderDTO();
             provider.setName(s);
             provider.setDescription(clientConfig.description().orElse(null));
+            provider.setFromToken(tokenProviderKey.equals(s));
             provider.setRealms(getRealms(s));
             providersResponseDTO.addProvidersItem(provider);
         });
@@ -124,5 +138,14 @@ public class KeycloakAdminService {
 
     public List<String> getRealms(String provider) {
         return keycloakClients.get(provider).realms().findAll().stream().map(RealmRepresentation::getRealm).toList();
+    }
+
+    private JsonWebToken principalToken() {
+        var context = ApplicationContext.get();
+        var principalToken = context.getPrincipalToken();
+        if (principalToken == null) {
+            throw new KeycloakException("Principal token is required");
+        }
+        return principalToken;
     }
 }

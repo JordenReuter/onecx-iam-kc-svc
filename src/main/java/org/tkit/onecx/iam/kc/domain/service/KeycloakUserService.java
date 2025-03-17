@@ -63,6 +63,7 @@ public class KeycloakUserService {
         ProviderDTO providerDTO = new ProviderDTO();
         providerDTO.setName(currentProviderKey);
         providerDTO.setDescription(kcConfig.keycloaks().get(currentProviderKey).description().orElse(null));
+        providerDTO.setFromToken(true);
         providerDTO.setRealms(List.of(getCurrentRealm()));
         providersResponseDTO.setProviders(List.of(providerDTO));
         return providersResponseDTO;
