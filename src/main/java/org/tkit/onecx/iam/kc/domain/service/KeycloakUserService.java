@@ -13,6 +13,7 @@ import org.tkit.onecx.iam.kc.domain.config.KcConfig;
 import org.tkit.quarkus.context.ApplicationContext;
 import org.tkit.quarkus.log.cdi.LogExclude;
 
+import gen.org.tkit.onecx.iam.kc.internal.model.DomainDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.ProviderDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.ProvidersResponseDTO;
 import io.quarkus.keycloak.admin.client.common.KeycloakAdminClientConfig;
@@ -24,6 +25,9 @@ public class KeycloakUserService {
 
     @Inject
     KcConfig kcConfig;
+
+    @Inject
+    KeycloakUtil keycloakUtil;
 
     private Keycloak keycloakClient;
 
@@ -38,9 +42,9 @@ public class KeycloakUserService {
                 config.password());
     }
 
-    public String getCurrentDomain() {
+    public DomainDTO getCurrentDomain() {
         var principalToken = principalToken();
-        return KeycloakRealmNameUtil.getRealmName(principalToken.getIssuer());
+        return new DomainDTO().name(keycloakUtil.getDomainFromIssuer(principalToken.getIssuer()));
     }
 
     public String getCurrentIssuer() {
@@ -72,7 +76,7 @@ public class KeycloakUserService {
 
     public void resetPassword(@LogExclude(mask = "***") String value) {
         createClient();
-        var realm = getCurrentDomain();
+        var realm = getCurrentDomain().getName();
         var principal = ApplicationContext.get().getPrincipal();
 
         CredentialRepresentation resetPassword = new CredentialRepresentation();

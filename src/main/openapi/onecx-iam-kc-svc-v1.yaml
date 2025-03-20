@@ -9,8 +9,8 @@ tags:
  - name: AdminController
    description: IAM admin controller
 paths:
- /v1/{provider}/{domain}/roles/{userId}:
-  get:
+ /v1/{userId}/roles:
+  post:
    security:
     - oauth2: [ ocx-ia:all, ocx-ia:read ]
    tags:
@@ -18,24 +18,17 @@ paths:
    summary: Get roles of user by id
    operationId: getUserRoles
    parameters:
-    - name: provider
-      in: path
-      required: true
-      description: provider
-      schema:
-       type: string
-    - name: domain
-      in: path
-      required: true
-      description: domain
-      schema:
-       type: string
     - name: userId
       in: path
       required: true
       description: Keycloak userId
       schema:
        type: string
+   requestBody:
+    content:
+     "application/json":
+      schema:
+       $ref: '#/components/schemas/UserRolesSearchRequest'
    responses:
     200:
      description: OK
@@ -60,6 +53,11 @@ components:
       ocx-ia:read: Grants read access
       ocx-ia:write: Grants write access
  schemas:
+  UserRolesSearchRequest:
+   type: object
+   properties:
+    issuer:
+     type: string
   UserRolesResponse:
    type: object
    properties:

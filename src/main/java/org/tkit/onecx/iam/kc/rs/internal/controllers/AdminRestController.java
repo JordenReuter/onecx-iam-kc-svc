@@ -18,6 +18,7 @@ import org.tkit.quarkus.rs.context.token.TokenException;
 import gen.org.tkit.onecx.iam.kc.internal.AdminInternalApi;
 import gen.org.tkit.onecx.iam.kc.internal.model.ProblemDetailResponseDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.RoleSearchCriteriaDTO;
+import gen.org.tkit.onecx.iam.kc.internal.model.UserRolesSearchRequestDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.UserSearchCriteriaDTO;
 
 @LogService
@@ -38,26 +39,27 @@ public class AdminRestController implements AdminInternalApi {
 
     @Override
     public Response getAllProviders() {
-        return Response.status(Response.Status.OK).entity(adminService.getAllKeycloaksAndRealms()).build();
+        return Response.status(Response.Status.OK).entity(adminService.getAllProviderAndDomains()).build();
     }
 
     @Override
-    public Response getUserRoles(String provider, String realm, String userId) {
-        return Response.ok().entity(roleMapper.map(adminService.getUserRoles(provider, realm, userId))).build();
+    public Response getUserRoles(String userId, UserRolesSearchRequestDTO userRolesSearchRequestDTO) {
+        return Response.ok().entity(roleMapper.map(adminService.getUserRoles(userRolesSearchRequestDTO.getIssuer(), userId)))
+                .build();
     }
 
     @Override
-    public Response searchRolesByCriteria(String provider, String realm, RoleSearchCriteriaDTO roleSearchCriteriaDTO) {
+    public Response searchRolesByCriteria(RoleSearchCriteriaDTO roleSearchCriteriaDTO) {
         var criteria = roleMapper.map(roleSearchCriteriaDTO);
-        var result = adminService.searchRoles(provider, realm, criteria);
+        var result = adminService.searchRoles(roleSearchCriteriaDTO.getIssuer(), criteria);
         return Response.ok(roleMapper.map(result)).build();
     }
 
     @Override
-    public Response searchUsersByCriteria(String provider, String realm, UserSearchCriteriaDTO userSearchCriteriaDTO) {
+    public Response searchUsersByCriteria(UserSearchCriteriaDTO userSearchCriteriaDTO) {
         var criteria = userMapper.map(userSearchCriteriaDTO);
-        var usersPage = adminService.searchUsers(provider, realm, criteria);
-        return Response.ok(userMapper.map(usersPage, realm)).build();
+        var usersPage = adminService.searchUsers(userSearchCriteriaDTO.getIssuer(), criteria);
+        return Response.ok(userMapper.map(usersPage, "addRealmHere")).build();
     }
 
     @ServerExceptionMapper

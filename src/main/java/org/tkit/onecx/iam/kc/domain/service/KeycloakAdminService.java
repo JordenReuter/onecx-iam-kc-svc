@@ -13,7 +13,6 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.MappingsRepresentation;
-import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.tkit.onecx.iam.kc.domain.config.KcConfig;
@@ -24,6 +23,7 @@ import org.tkit.onecx.iam.kc.domain.model.UserSearchCriteria;
 import org.tkit.quarkus.context.ApplicationContext;
 import org.tkit.quarkus.log.cdi.LogService;
 
+import gen.org.tkit.onecx.iam.kc.internal.model.DomainDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.ProviderDTO;
 import gen.org.tkit.onecx.iam.kc.internal.model.ProvidersResponseDTO;
 
@@ -33,6 +33,9 @@ public class KeycloakAdminService {
 
     @Inject
     KeycloakClientFactory keycloakClientFactory;
+
+    @Inject
+    KeycloakUtil keycloakUtil;
 
     @Inject
     KcConfig kcConfig;
@@ -53,12 +56,14 @@ public class KeycloakAdminService {
         });
     }
 
-    public PageResult<RoleRepresentation> searchRoles(String provider, String realm, RoleSearchCriteria criteria) {
+    public PageResult<RoleRepresentation> searchRoles(String issuer, RoleSearchCriteria criteria) {
         try {
+            var provider = keycloakUtil.getProviderFromIssuer(issuer);
+            var domain = keycloakUtil.getDomainFromIssuer(issuer);
             var first = criteria.getPageNumber() * criteria.getPageSize();
             var count = 0;
 
-            List<RoleRepresentation> roles = keycloakClients.get(provider).realm(realm)
+            List<RoleRepresentation> roles = keycloakClients.get(provider).realm(domain)
                     .roles().list(criteria.getName(), first, criteria.getPageSize(), true);
 
             return new PageResult<>(count, roles, Page.of(criteria.getPageNumber(), criteria.getPageSize()));
@@ -67,20 +72,22 @@ public class KeycloakAdminService {
         }
     }
 
-    public PageResult<UserRepresentation> searchUsers(String provider, String realm, UserSearchCriteria criteria) {
+    public PageResult<UserRepresentation> searchUsers(String issuer, UserSearchCriteria criteria) {
         try {
+            var provider = keycloakUtil.getProviderFromIssuer(issuer);
+            var domain = keycloakUtil.getDomainFromIssuer(issuer);
             if (criteria.getUserId() != null && !criteria.getUserId().isBlank()) {
-                var user = getUserById(criteria.getUserId(), provider, realm);
+                var user = getUserById(criteria.getUserId(), provider, domain);
                 return new PageResult<>(user.size(), user, Page.of(0, 1));
             }
 
             var first = criteria.getPageNumber() * criteria.getPageSize();
-            var count = keycloakClients.get(provider).realm(realm).users().count(criteria.getLastName(),
+            var count = keycloakClients.get(provider).realm(domain).users().count(criteria.getLastName(),
                     criteria.getFirstName(),
                     criteria.getEmail(),
                     criteria.getUserName());
 
-            List<UserRepresentation> users = keycloakClients.get(provider).realm(realm)
+            List<UserRepresentation> users = keycloakClients.get(provider).realm(domain)
                     .users()
                     .search(criteria.getUserName(), criteria.getFirstName(), criteria.getLastName(), criteria.getEmail(), first,
                             criteria.getPageSize(), null, false);
@@ -101,9 +108,11 @@ public class KeycloakAdminService {
         return users;
     }
 
-    public List<RoleRepresentation> getUserRoles(String provider, String realm, String userId) {
+    public List<RoleRepresentation> getUserRoles(String issuer, String userId) {
         try {
-            MappingsRepresentation roles = keycloakClients.get(provider).realm(realm)
+            var provider = keycloakUtil.getProviderFromIssuer(issuer);
+            var domain = keycloakUtil.getDomainFromIssuer(issuer);
+            MappingsRepresentation roles = keycloakClients.get(provider).realm(domain)
                     .users().get(userId).roles().getAll();
             return roles.getRealmMappings();
         } catch (Exception ex) {
@@ -121,7 +130,7 @@ public class KeycloakAdminService {
                 .orElse(null);
     }
 
-    public ProvidersResponseDTO getAllKeycloaksAndRealms() {
+    public ProvidersResponseDTO getAllProviderAndDomains() {
         var tokenProviderKey = getCurrentProviderKey();
         ProvidersResponseDTO providersResponseDTO = new ProvidersResponseDTO();
         kcConfig.keycloaks().forEach((s, clientConfig) -> {
@@ -129,15 +138,24 @@ public class KeycloakAdminService {
             provider.setName(s);
             provider.setDescription(clientConfig.description().orElse(null));
             provider.setFromToken(tokenProviderKey.equals(s));
-            provider.setDomains(getDomains(s));
+            provider.setDomains(getDomains(s, clientConfig.issuerHost()));
             provider.setDescription(clientConfig.displayName());
             providersResponseDTO.addProvidersItem(provider);
         });
         return providersResponseDTO;
     }
 
-    public List<String> getDomains(String provider) {
-        return keycloakClients.get(provider).realms().findAll().stream().map(RealmRepresentation::getRealm).toList();
+    public List<DomainDTO> getDomains(String provider, String issuerHost) {
+        var domains = keycloakClients.get(provider).realms().findAll();
+        List<DomainDTO> domainDtos = new ArrayList<>();
+        domains.forEach(realmRepresentation -> {
+            var domain = new DomainDTO();
+            domain.setName(realmRepresentation.getRealm());
+            domain.setDisplayName(realmRepresentation.getDisplayName());
+            domain.setIssuer(keycloakUtil.buildIssuerFromHostAndDomain(issuerHost, realmRepresentation.getRealm()));
+            domainDtos.add(domain);
+        });
+        return domainDtos;
     }
 
     private JsonWebToken principalToken() {

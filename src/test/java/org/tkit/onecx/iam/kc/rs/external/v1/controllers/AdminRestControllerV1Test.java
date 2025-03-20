@@ -17,6 +17,7 @@ import org.tkit.quarkus.security.test.GenerateKeycloakClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesResponseDTOV1;
+import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesSearchRequestDTOV1;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.keycloak.client.KeycloakTestClient;
@@ -28,6 +29,7 @@ class AdminRestControllerV1Test extends AbstractTest {
 
     private static final KeycloakTestClient keycloakAuthClient = new KeycloakTestClient();
     KeycloakTestClient keycloakClient = createClient();
+    KeycloakTestClient keycloakClient1 = createClient1();
 
     @Test
     void getUserRolesTest() throws IOException {
@@ -41,13 +43,19 @@ class AdminRestControllerV1Test extends AbstractTest {
 
         String id = jwt.get("sub").toString();
 
+        var tokens1 = this.getTokens(keycloakClient1, USER_ALICE);
+        var aliceToken1 = tokens1.getIdToken();
+        String[] chunks1 = aliceToken1.split("\\.");
+        String body1 = new String(decoder.decode(chunks1[1]));
+        JSONObject jwt1 = mapper.readValue(body1, JSONObject.class);
+
         var result = given()
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .pathParam("provider", "kc0")
-                .pathParam("domain", "quarkus")
                 .pathParam("userId", id)
-                .contentType(APPLICATION_JSON).get()
+                .body(new UserRolesSearchRequestDTOV1().issuer(jwt.get("iss").toString()))
+                .contentType(APPLICATION_JSON)
+                .post()
                 .then().statusCode(Response.Status.OK.getStatusCode())
                 .extract().as(UserRolesResponseDTOV1.class);
         Assertions.assertNotNull(result);
@@ -57,19 +65,17 @@ class AdminRestControllerV1Test extends AbstractTest {
         given()
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .pathParam("provider", "kc0")
-                .pathParam("domain", "master")
+                .body(new UserRolesSearchRequestDTOV1().issuer(jwt1.get("iss").toString().replace("quarkus", "master")))
                 .pathParam("userId", id)
-                .contentType(APPLICATION_JSON).get()
+                .contentType(APPLICATION_JSON).post()
                 .then().statusCode(Response.Status.BAD_REQUEST.getStatusCode());
 
         //no token test
         given()
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
-                .pathParam("provider", "kc0")
-                .pathParam("domain", "master")
+                .body(new UserRolesSearchRequestDTOV1().issuer(""))
                 .pathParam("userId", id)
-                .contentType(APPLICATION_JSON).get()
+                .contentType(APPLICATION_JSON).post()
                 .then().statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
 }

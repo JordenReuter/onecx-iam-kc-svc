@@ -73,7 +73,7 @@ public class UserRestControllerTest extends AbstractTest {
         assertThat(res.getProviders()).hasSize(1);
         assertThat(res.getProviders().get(0).getName()).isEqualTo("kc0");
         assertThat(res.getProviders().get(0).getDomains()).hasSize(1);
-        assertThat(res.getProviders().get(0).getDomains().get(0)).isEqualTo("quarkus");
+        assertThat(res.getProviders().get(0).getDomains().get(0).getName()).isEqualTo("quarkus");
     }
 
     @Test

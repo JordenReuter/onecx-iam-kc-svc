@@ -73,16 +73,20 @@ public class AdminRestControllerTest extends AbstractTest {
     }
 
     @Test
-    void roleSearchAllTest() {
-
+    void roleSearchAllTest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
         var result = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-                .body(new RoleSearchCriteriaDTO())
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "master")
-                .post("/{provider}/{realm}/roles/search")
+                .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -94,10 +98,8 @@ public class AdminRestControllerTest extends AbstractTest {
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient1, USER_ALICE).getIdToken())
-                .body(new RoleSearchCriteriaDTO())
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "master")
-                .post("/{provider}/{realm}/roles/search")
+                .body(new RoleSearchCriteriaDTO().issuer(jwt.get("iss").toString()))
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -108,15 +110,22 @@ public class AdminRestControllerTest extends AbstractTest {
     }
 
     @Test
-    void roleSearchTest() {
+    void roleSearchTest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+        var iss = jwt.get("iss").toString();
+        iss = iss.replace("quarkus", "master");
         var result = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
-                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-                .body(new RoleSearchCriteriaDTO().name("default-roles-master"))
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "master")
-                .post("/{provider}/{realm}/roles/search")
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(new RoleSearchCriteriaDTO().name("default-roles-master").issuer(iss))
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -131,10 +140,8 @@ public class AdminRestControllerTest extends AbstractTest {
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-                .body(new RoleSearchCriteriaDTO().name("default-roles-master"))
-                .pathParam("provider", "kc100")
-                .pathParam("realm", "someRealm")
-                .post("/{provider}/{realm}/roles/search")
+                .body(new RoleSearchCriteriaDTO().name("default-roles-master").issuer("wrongkc"))
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -156,10 +163,9 @@ public class AdminRestControllerTest extends AbstractTest {
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
                 .contentType(APPLICATION_JSON)
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
                 .pathParam("userId", id)
-                .get("/{provider}/{realm}/roles/{userId}")
+                .body(new UserRolesSearchRequestDTO().issuer(jwt.get("iss").toString()))
+                .post("/{userId}/roles")
                 .then().statusCode(Response.Status.OK.getStatusCode())
                 .extract().as(UserRolesResponseDTO.class);
         Assertions.assertNotNull(result);
@@ -170,10 +176,9 @@ public class AdminRestControllerTest extends AbstractTest {
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .header(APM_HEADER_TOKEN, aliceToken)
                 .contentType(APPLICATION_JSON)
-                .pathParam("provider", "kc100")
-                .pathParam("realm", "someRealm")
                 .pathParam("userId", id)
-                .get("/{provider}/{realm}/roles/{userId}")
+                .body(new UserRolesSearchRequestDTO().issuer("notExisting"))
+                .post("/{userId}/roles")
                 .then().statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .extract().as(ProblemDetailResponseDTO.class);
     }
@@ -185,9 +190,7 @@ public class AdminRestControllerTest extends AbstractTest {
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/roles/search")
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .extract()
@@ -201,16 +204,21 @@ public class AdminRestControllerTest extends AbstractTest {
     }
 
     @Test
-    void roleSearchEmptyResultTest() {
+    void roleSearchEmptyResultTest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
 
         var result = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
-                .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
-                .body(new RoleSearchCriteriaDTO().name("does-not-exists"))
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/roles/search")
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(new RoleSearchCriteriaDTO().name("does-not-exists").issuer(jwt.get("iss").toString()))
+                .post("/roles/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -222,18 +230,30 @@ public class AdminRestControllerTest extends AbstractTest {
 
     @Test
     void searchUsersRequest() throws JsonProcessingException {
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+
+        var tokensFromSecondKc = this.getTokens(keycloakClient1, USER_ALICE);
+        var aliceToken1 = tokensFromSecondKc.getIdToken();
+        String[] chunks1 = aliceToken1.split("\\.");
+        String body1 = new String(decoder.decode(chunks1[1]));
+        JSONObject jwt1 = mapper.readValue(body1, JSONObject.class);
 
         UserSearchCriteriaDTO dto = new UserSearchCriteriaDTO();
         dto.setUserName("alice");
+        dto.setIssuer(jwt.get("iss").toString());
 
         var result = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -251,9 +271,7 @@ public class AdminRestControllerTest extends AbstractTest {
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -266,9 +284,7 @@ public class AdminRestControllerTest extends AbstractTest {
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
@@ -276,13 +292,6 @@ public class AdminRestControllerTest extends AbstractTest {
         Assertions.assertEquals(1, result.getTotalElements());
 
         //search by id in correct kc
-        var tokens = this.getTokens(keycloakClient, USER_ALICE);
-        var aliceToken = tokens.getIdToken();
-        ObjectMapper mapper = new ObjectMapper();
-        Base64.Decoder decoder = Base64.getUrlDecoder();
-        String[] chunks = aliceToken.split("\\.");
-        String body = new String(decoder.decode(chunks[1]));
-        JSONObject jwt = mapper.readValue(body, JSONObject.class);
 
         dto.setUserId(jwt.get("sub").toString());
 
@@ -291,38 +300,35 @@ public class AdminRestControllerTest extends AbstractTest {
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
                 .body().as(UserPageResultDTO.class);
         Assertions.assertEquals(1, result.getTotalElements());
+
         //search in wrong kc => user with given id does not exist
+        dto.setIssuer(jwt1.get("iss").toString());
         result = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc1")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
                 .body().as(UserPageResultDTO.class);
         Assertions.assertEquals(0, result.getTotalElements());
 
+        dto.setIssuer("notExisting");
         //search in not existing kc and realm
         given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, this.getTokens(keycloakClient, USER_ALICE).getIdToken())
                 .body(dto)
-                .pathParam("provider", "kc100")
-                .pathParam("realm", "someRealm")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
@@ -331,15 +337,13 @@ public class AdminRestControllerTest extends AbstractTest {
     void searchUsersEmptyToken() {
 
         UserSearchCriteriaDTO dto = new UserSearchCriteriaDTO();
-
+        dto.setIssuer("");
         var exception = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, " ")
                 .body(dto)
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .extract()
@@ -359,9 +363,7 @@ public class AdminRestControllerTest extends AbstractTest {
         var exception = given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
-                .pathParam("provider", "kc0")
-                .pathParam("realm", "quarkus")
-                .post("/{provider}/{realm}/users/search")
+                .post("/users/search")
                 .then()
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .extract()
