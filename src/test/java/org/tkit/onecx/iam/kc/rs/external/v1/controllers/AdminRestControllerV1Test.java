@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.tkit.onecx.iam.kc.test.AbstractTest;
 import org.tkit.quarkus.security.test.GenerateKeycloakClient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesResponseDTOV1;
@@ -55,7 +56,7 @@ class AdminRestControllerV1Test extends AbstractTest {
                 .pathParam("userId", id)
                 .body(new UserRolesSearchRequestDTOV1().issuer(jwt.get("iss").toString()))
                 .contentType(APPLICATION_JSON)
-                .post()
+                .post("/{userId}/roles")
                 .then().statusCode(Response.Status.OK.getStatusCode())
                 .extract().as(UserRolesResponseDTOV1.class);
         Assertions.assertNotNull(result);
@@ -67,7 +68,7 @@ class AdminRestControllerV1Test extends AbstractTest {
                 .header(APM_HEADER_TOKEN, aliceToken)
                 .body(new UserRolesSearchRequestDTOV1().issuer(jwt1.get("iss").toString().replace("quarkus", "master")))
                 .pathParam("userId", id)
-                .contentType(APPLICATION_JSON).post()
+                .contentType(APPLICATION_JSON).post("/{userId}/roles")
                 .then().statusCode(Response.Status.BAD_REQUEST.getStatusCode());
 
         //no token test
@@ -75,7 +76,36 @@ class AdminRestControllerV1Test extends AbstractTest {
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
                 .body(new UserRolesSearchRequestDTOV1().issuer(""))
                 .pathParam("userId", id)
-                .contentType(APPLICATION_JSON).post()
+                .contentType(APPLICATION_JSON).post("/{userId}/roles")
                 .then().statusCode(Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    void validateIssuerTest() throws JsonProcessingException {
+
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+        given()
+                .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body("notExistingIssuer")
+                .post("/validate")
+                .then()
+                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
+
+        given()
+                .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(jwt.get("iss").toString())
+                .post("/validate")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode());
     }
 }

@@ -158,6 +158,10 @@ public class KeycloakAdminService {
         return domainDtos;
     }
 
+    public String validateIssuer(String issuer) {
+        return keycloakUtil.getProviderFromIssuer(issuer);
+    }
+
     private JsonWebToken principalToken() {
         var context = ApplicationContext.get();
         var principalToken = context.getPrincipalToken();

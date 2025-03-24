@@ -36,6 +36,31 @@ paths:
       application/json:
        schema:
         $ref: '#/components/schemas/ProblemDetailResponse'
+ /internal/admin/validate:
+  post:
+   security:
+    - oauth2: [ ocx-ia:all, ocx-ia:read ]
+   tags:
+    - AdminInternal
+   summary: check if issuer is part of this svc
+   operationId: validateIssuer
+   requestBody:
+    required: true
+    content:
+     "application/json":
+      schema:
+       type: string
+   responses:
+    200:
+     description: OK
+    404:
+     description: issuer not found
+    400:
+     description: Bad request
+     content:
+      application/json:
+       schema:
+        $ref: '#/components/schemas/ProblemDetailResponse'
  /internal/admin/{userId}/roles:
   post:
    security:

@@ -376,4 +376,33 @@ public class AdminRestControllerTest extends AbstractTest {
                 exception.getDetail());
         Assertions.assertNotNull(exception.getInvalidParams());
     }
+
+    @Test
+    void validateIssuerTest() throws JsonProcessingException {
+
+        var tokens = this.getTokens(keycloakClient, USER_ALICE);
+        var aliceToken = tokens.getIdToken();
+        ObjectMapper mapper = new ObjectMapper();
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        String[] chunks = aliceToken.split("\\.");
+        String body = new String(decoder.decode(chunks[1]));
+        JSONObject jwt = mapper.readValue(body, JSONObject.class);
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body("notExistingIssuer")
+                .post("/validate")
+                .then()
+                .statusCode(Response.Status.NOT_FOUND.getStatusCode());
+
+        given()
+                .auth().oauth2(authClient.getClientAccessToken("testClient"))
+                .contentType(APPLICATION_JSON)
+                .header(APM_HEADER_TOKEN, aliceToken)
+                .body(jwt.get("iss").toString())
+                .post("/validate")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode());
+    }
 }

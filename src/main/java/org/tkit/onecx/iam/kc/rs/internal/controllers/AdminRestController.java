@@ -62,6 +62,16 @@ public class AdminRestController implements AdminInternalApi {
         return Response.ok(userMapper.map(usersPage, "addRealmHere")).build();
     }
 
+    @Override
+    public Response validateIssuer(String issuer) {
+        var provider = adminService.validateIssuer(issuer);
+        if (provider == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.status(Response.Status.OK).build();
+        }
+    }
+
     @ServerExceptionMapper
     public RestResponse<ProblemDetailResponseDTO> constraint(TokenException ex) {
         return exceptionMapper.exception(ex.getKey(), ex.getMessage());

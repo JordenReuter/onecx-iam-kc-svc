@@ -35,6 +35,16 @@ public class AdminRestControllerV1 implements AdminControllerApi {
                 .build();
     }
 
+    @Override
+    public Response validateIssuer(String issuer) {
+        var provider = adminService.validateIssuer(issuer);
+        if (provider == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.status(Response.Status.OK).build();
+        }
+    }
+
     @ServerExceptionMapper
     public RestResponse<ProblemDetailResponseDTOV1> constraint(KeycloakException ex) {
         return exceptionMapper.exception(ex);
