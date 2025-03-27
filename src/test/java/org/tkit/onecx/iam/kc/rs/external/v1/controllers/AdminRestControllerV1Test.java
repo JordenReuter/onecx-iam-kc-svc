@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesResponseDTOV1;
 import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesSearchRequestDTOV1;
+import gen.org.tkit.onecx.iam.kc.v1.model.ValidateIssuerRequestDTOV1;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.keycloak.client.KeycloakTestClient;
@@ -90,20 +91,24 @@ class AdminRestControllerV1Test extends AbstractTest {
         String[] chunks = aliceToken.split("\\.");
         String body = new String(decoder.decode(chunks[1]));
         JSONObject jwt = mapper.readValue(body, JSONObject.class);
+
+        ValidateIssuerRequestDTOV1 requestDTOV1 = new ValidateIssuerRequestDTOV1();
+        requestDTOV1.setIssuer("notExistingIssuer");
         given()
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .body("notExistingIssuer")
+                .body(requestDTOV1)
                 .post("/validate")
                 .then()
                 .statusCode(Response.Status.NOT_FOUND.getStatusCode());
 
+        requestDTOV1.setIssuer(jwt.get("iss").toString());
         given()
                 .auth().oauth2(keycloakAuthClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .body(jwt.get("iss").toString())
+                .body(requestDTOV1)
                 .post("/validate")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode());

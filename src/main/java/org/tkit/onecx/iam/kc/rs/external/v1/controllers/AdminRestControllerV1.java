@@ -15,6 +15,7 @@ import org.tkit.quarkus.log.cdi.LogService;
 import gen.org.tkit.onecx.iam.kc.v1.AdminControllerApi;
 import gen.org.tkit.onecx.iam.kc.v1.model.ProblemDetailResponseDTOV1;
 import gen.org.tkit.onecx.iam.kc.v1.model.UserRolesSearchRequestDTOV1;
+import gen.org.tkit.onecx.iam.kc.v1.model.ValidateIssuerRequestDTOV1;
 
 @LogService
 @ApplicationScoped
@@ -36,8 +37,8 @@ public class AdminRestControllerV1 implements AdminControllerApi {
     }
 
     @Override
-    public Response validateIssuer(String issuer) {
-        var provider = adminService.validateIssuer(issuer);
+    public Response validateIssuer(ValidateIssuerRequestDTOV1 issuerRequestDTOV1) {
+        var provider = adminService.validateIssuer(issuerRequestDTOV1.getIssuer());
         if (provider == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {

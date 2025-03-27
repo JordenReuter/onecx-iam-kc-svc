@@ -55,7 +55,7 @@ paths:
     content:
      "application/json":
       schema:
-       type: string
+       $ref: '#/components/schemas/ValidateIssuerRequest'
    responses:
     200:
      description: OK
@@ -78,6 +78,11 @@ components:
       ocx-ia:read: Grants read access
       ocx-ia:write: Grants write access
  schemas:
+  ValidateIssuerRequest:
+   type: object
+   properties:
+    issuer:
+     type: string
   UserRolesSearchRequest:
    type: object
    properties:

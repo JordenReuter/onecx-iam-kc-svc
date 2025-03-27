@@ -16,10 +16,7 @@ import org.tkit.quarkus.log.cdi.LogService;
 import org.tkit.quarkus.rs.context.token.TokenException;
 
 import gen.org.tkit.onecx.iam.kc.internal.AdminInternalApi;
-import gen.org.tkit.onecx.iam.kc.internal.model.ProblemDetailResponseDTO;
-import gen.org.tkit.onecx.iam.kc.internal.model.RoleSearchCriteriaDTO;
-import gen.org.tkit.onecx.iam.kc.internal.model.UserRolesSearchRequestDTO;
-import gen.org.tkit.onecx.iam.kc.internal.model.UserSearchCriteriaDTO;
+import gen.org.tkit.onecx.iam.kc.internal.model.*;
 
 @LogService
 @ApplicationScoped
@@ -63,8 +60,8 @@ public class AdminRestController implements AdminInternalApi {
     }
 
     @Override
-    public Response validateIssuer(String issuer) {
-        var provider = adminService.validateIssuer(issuer);
+    public Response validateIssuer(ValidateIssuerRequestDTO issuerRequestDTO) {
+        var provider = adminService.validateIssuer(issuerRequestDTO.getIssuer());
         if (provider == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {

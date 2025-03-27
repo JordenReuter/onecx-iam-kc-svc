@@ -387,20 +387,23 @@ public class AdminRestControllerTest extends AbstractTest {
         String[] chunks = aliceToken.split("\\.");
         String body = new String(decoder.decode(chunks[1]));
         JSONObject jwt = mapper.readValue(body, JSONObject.class);
+
+        ValidateIssuerRequestDTO requestDTO = new ValidateIssuerRequestDTO();
+        requestDTO.setIssuer("notExistingIssuer");
         given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .body("notExistingIssuer")
+                .body(requestDTO)
                 .post("/validate")
                 .then()
                 .statusCode(Response.Status.NOT_FOUND.getStatusCode());
-
+        requestDTO.setIssuer(jwt.get("iss").toString());
         given()
                 .auth().oauth2(authClient.getClientAccessToken("testClient"))
                 .contentType(APPLICATION_JSON)
                 .header(APM_HEADER_TOKEN, aliceToken)
-                .body(jwt.get("iss").toString())
+                .body(requestDTO)
                 .post("/validate")
                 .then()
                 .statusCode(Response.Status.OK.getStatusCode());
